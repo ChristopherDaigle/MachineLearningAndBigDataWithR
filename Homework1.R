@@ -49,7 +49,7 @@ names(lm.fit)
 # 2 ####
 data <- transform(data, Year = substr(date, 1, 4), Month = substr(date, 5, 6), Day = substr(date, 7, 8))
 
-data$cleanDate <- format(as.Date(paste0(data$Year,'-',data$Month,'-',data$Day)), '%Y-%m-%d')
+data$cleanDate <- as.Date(paste0(data$Year,'-',data$Month,'-',data$Day))
 
 data$Season[data$Month == '01' | data$Month == '02' | data$Month == '03' | data$Month == '12' ] <- 'Winter'
 data$Season[data$Month == '04' | data$Month == '05' | data$Month == '06'] <- 'Spring'
