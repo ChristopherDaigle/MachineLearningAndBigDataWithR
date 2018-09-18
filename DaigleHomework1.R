@@ -130,6 +130,12 @@ ssr_r <- sum((fitted(yHatR) - data$price) ^ 2)
 f <- ((ssr_r - ssr_u) / 3) / (ssr_u / (21613 - 5 - 1))
 var.test(yHatU, yHatR, alternative = "two.sided")
 
+# Min's solution
+SSR <- sum((yHatU$residuals)^2)
+SSRR <- sum((yHatR$residuals)^2)
+FSTAT <- ((SSRR - SSRU)/3)/(SSRU/(dim(data)[1] - 7 - 1))
+qf(0.95, df1 = 3, df2 = dim(data)[1] - 7 - 1)
+
 # 5 ####
 # Predict the housing price when season = spring, sqft_living=2500, yr_built=2000, waterfront=0:
 # PREDICTION RESULT: $594406.1

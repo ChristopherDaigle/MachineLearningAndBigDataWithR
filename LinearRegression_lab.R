@@ -99,6 +99,11 @@ lines(x, yhat[,3], lty = 3, lwd = 2, col = 'red')
 #  Exercise 3
 #  Simulate time series data and see that conventional tests may not work in the time series. 
 #  e.g. GDP growth, stock price, a firm's revenue.... Marketing
+#
+# Note that random sampling ensures iid, but in time series, it is not randomly
+# sampled and it is dependent (serial correlation or autocorrelation) and that
+# can be a problem in inference because the standard error will be invalid and
+# thus the t-statistic will be invalid and then the p-value will be invalid
 
 set.seed(102)
 
@@ -106,23 +111,23 @@ Sales<- rep(NA,100)
 Online <- rep(NA,100)
 e <- rep(NA,100)
 
-Online[1] <- 2*rnorm(1)
-e[1] <- rnorm(1)
+Online[1] <- 2*rnorm(1) #initial value of x
+e[1] <- rnorm(1) # initial value of e
 b0 <- 1
 b1 <- 0
-Sales[1] <- b0 + b1*Online[1] + e[1]
+Sales[1] <- b0 + b1*Online[1] + e[1] #true DGP of our simulation
 rho1 <- 0.7
 rho2 <- 0.7
 
 for (t in 2:100) {
-  Online[t] <- rho1*Online[t-1] + rnorm(1)
-  e[t] <- rho2*e[t-1] + rnorm(1)
-  Sales[t] <- b0 + b1*Online[t] + e[t]
+  Online[t] <- rho1*Online[t-1] + rnorm(1) # online budget is highly correlated with yesterday's budget
+  e[t] <- rho2*e[t-1] + rnorm(1) # error term is also dependent on previous, implies serially correlation
+  Sales[t] <- b0 + b1*Online[t] + e[t] # this is our 
 }
 
 linear.fit <- lm(Sales~Online)
-summary(linear.fit) 
-confint(linear.fit)[2,]
+summary(linear.fit) # We reject the null hypothesis based on the significance level of the p-value
+confint(linear.fit)[2,] # again, we can see the value is statistically significant from zero
 
 # We can see that we reject H0: b1=0. So, we conclude that TV advertisement is associated with Sales.
 # But, this is a mistake. The true b1=0. If our inference procedure is valid, when we test 100 times, 
