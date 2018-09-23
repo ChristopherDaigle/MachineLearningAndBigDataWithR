@@ -1,13 +1,15 @@
-# Chris Daigle
-# Homework 1
-# Exercise 2
+#' ___
+#' Chris Daigle
+#' Homework 1
+#' Exercise: 2
+#' ___
 #
 # 1 ####
 # Download the housing dataset from https://www.kaggle.com/harlfoxem/housesalesprediction and run a regression to predict housing prices.
 
 rm(list = ls())
 
-setwd('~/Git/MachineLearningAndBigDataWithR')
+setwd('~/Git/MachineLearningAndBigDataWithR/Data')
 
 # dataurl  = "https://www.kaggle.com/harlfoxem/housesalesprediction/downloads/kc_house_data.csv/1"
 dataName <- 'kcHouseData.csv'
@@ -131,10 +133,10 @@ f <- ((ssr_r - ssr_u) / 3) / (ssr_u / (21613 - 5 - 1))
 var.test(yHatU, yHatR, alternative = "two.sided")
 
 # Min's solution
-SSR <- sum((yHatU$residuals)^2)
-SSRR <- sum((yHatR$residuals)^2)
-FSTAT <- ((SSRR - SSRU)/3)/(SSRU/(dim(data)[1] - 7 - 1))
-qf(0.95, df1 = 3, df2 = dim(data)[1] - 7 - 1)
+# SSR <- sum((yHatU$residuals)^2)
+# SSRR <- sum((yHatR$residuals)^2)
+# FSTAT <- ((SSRR - SSR)/3)/(SSR/(dim(data)[1] - 7 - 1))
+# qf(0.95, df1 = 3, df2 = dim(data)[1] - 7 - 1)
 
 # 5 ####
 # Predict the housing price when season = spring, sqft_living=2500, yr_built=2000, waterfront=0:
