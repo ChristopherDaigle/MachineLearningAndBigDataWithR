@@ -1,7 +1,10 @@
 #' ___
 #' Chris Daigle
+#' 
 #' Homework 1
+#' 
 #' Exercise: 2
+#' 
 #' ___
 #
 # 1 ####
