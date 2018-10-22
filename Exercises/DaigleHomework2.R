@@ -1,4 +1,5 @@
 # Chris Daigle
+# Homework 2
 # Exercise 3
 
 set.seed(102)
