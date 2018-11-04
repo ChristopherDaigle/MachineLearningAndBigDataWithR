@@ -40,3 +40,29 @@ Auto.boot <- Auto[, c(1, 4, 5)]
 boot(data = Auto.boot, statistic = lm.cof, R = 100)
 summary(lm(mpg ~ horsepower + weight, data = Auto.boot))
 
+# Another bootstrap method in a linear regression model is to
+# resample residuals instead of (X, Y). The former is called Residual
+# Bootstrapping and the latter is called Pairwise Bootstrapping. I beleve that
+# boot() is based on the Pairwise Bootstrap. Estimate the standard error and
+# bootstrap the 95% confidence intervals for the coeficient of horsepower with
+# Residual Bootstrapping.
+
+lm.fit <- lm(mpg~horsepower + weight, data = Auto.boot)
+t <- summary(lm.fit)$coefficients[2,3]
+
+tstar <- NA
+
+for (r in 1:1000) {
+  ustar <- sample(lm.fit$residuals, nrow(Auto), replace = TRUE)
+  ystar <- lm.fit$coefficients[1] + lm.fit$coefficients[2] * Auto$horsepower + lm.fit$coefficients[3] * Auto$weight + ustar
+  lm.fit.star <- lm(ystar ~ Auto$horsepower + Auto$weight)
+  tstar[r] <- (lm.fit.star$coefficients[2] - lm.fit$coefficients[2])/ summary(lm.fit.star)$coefficients[2,2]
+}
+
+tstar.ordered <- sort(tstar, decreasing = FALSE)
+
+cv.star <- c(tstar.ordered[25], tstar.ordered[975])
+t
+cv.star
+
+
