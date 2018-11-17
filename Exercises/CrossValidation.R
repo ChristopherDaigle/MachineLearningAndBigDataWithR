@@ -1,5 +1,5 @@
 #' ---
-#' title: "Homework 6"
+#' title: "Cross Validation"
 #' author: "Christopher Daigle"
 #' date: "Oct. 23 2018"
 #' output: pdf_document
@@ -12,7 +12,7 @@ set.seed(1)
 #' Exercise 1 ####
 #' Cross validation can also be used to estimate the test error for a
 #' classification problem. Run a logit model with the Smarket data. The dependent
-#' variable is Direction and
+#' variable is Direction
 
 glm.fit <-
   glm(Direction ~ Lag1 + Lag2, family = binomial, data = Smarket)
