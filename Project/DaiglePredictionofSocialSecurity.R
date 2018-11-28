@@ -51,4 +51,30 @@ str(df)
 
 # Variable Creation ####
 latestDate <- tail(df$date, n=1)
-df$inflator <- df[df$date == latestDate]$cpi / df$cpi
+baseCpi <- df$cpi[df$date == latestDate]
+df$inflator <- baseCpi / df$cpi
+
+names <- colnames(df[,c(2:6, 8:12, 16,18,20)])
+realNames <- paste('real', colnames(df[,c(2:6, 8:12, 16,18,20)]),sep = "")
+
+df$realDJIopen <- df$inflator * df$DJIopen
+df$realDJIhigh <- df$inflator * df$DJIhigh
+df$realDJIlow <- df$inflator * df$DJIlow
+df$realDJIclose <- df$inflator * df$DJIclose
+df$realDJIadjClose <- df$inflator * df$DJIadjClose
+
+df$realSPopen <- df$inflator * df$SPopen
+df$realSPhigh <- df$inflator * df$SPhigh
+df$realSPlow <- df$inflator * df$SPlow
+df$realSPclose <- df$inflator * df$SPclose
+df$realSPadjClose <- df$inflator * df$SPadjClose
+
+df$realAverageSSRetiredPay <- 
+
+
+
+# for (i in realNames){
+#   for (j in names){
+#     assign(realNames[i], df$inflator * df[j])
+#   }
+# }
