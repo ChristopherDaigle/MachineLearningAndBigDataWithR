@@ -37,15 +37,15 @@ dollarless <- function(x) {
 
 #loops to apply functions
 for (i in 15:20) {
-  df[,i] <- commaless(df[,i])
+  df[, i] <- commaless(df[, i])
 }
 for (i in 15:20) {
-  df[,i] <- dollarless(df[,i])
+  df[, i] <- dollarless(df[, i])
 }
 
 #loop to transform variable types
 for (i in 15:20) {
-  df[,i] <- as.numeric(df[,i])
+  df[, i] <- as.numeric(df[, i])
 }
 # Names with Index ####
 # 1 date                     : Date
@@ -121,63 +121,75 @@ df[, diffNames] <- rep(NA, nrow(df))
 for (i in 36:61) {
   df[, i][2:nrow(df)] <- diff(df[, i - 26], lag = 1)
 }
+diffTargetNames <-
+  paste('diff',
+        c(colnames(df[2:4])),
+        sep = "")
+df[, diffTargetNames] <- rep(NA, nrow(df))
+for (i in 62:64) {
+  df[, i][2:nrow(df)] <- diff(df[, i - 60], lag = 1)
+}
 
 # Positive Indicator
 posNames <- paste('pos',
                   c(colnames(df[10:22]),
-                    paste('Real', colnames(df[10:22]),sep = "")),
+                    paste('Real', colnames(df[10:22]), sep = "")),
                   sep = "")
-df[ ,posNames] <- rep(0, nrow(df))
-
-for (i in 62:87) {
-  df[, i][df[, i - 26] > 0] <- 1
+df[, posNames] <- rep(0, nrow(df))
+for (i in 65:90) {
+  df[, i][df[, i - 29] > 0] <- 1
 }
 
+posTargetNames <-
+  paste('pos',
+        c(colnames(df[2:4])),
+        sep = "")
+df[, posTargetNames] <- rep(0, nrow(df))
+for (i in 91:93) {
+  df[, i][df[, i - 29] > 0] <- 1
+}
+
+df <- df[, c(1:9, 62:64, 91:93, 10:61, 65:90)]
+df <- df[complete.cases(df),]
 # Visulizations ####
-plot(x = df$date,
-     y = df$diffDJIopen,
-     col = 'blue',
-     lwd = 1,
-     type = 'l',
-     ylab = 'US Dollars ($)',
-     xlab = 'Date')
-
-points(x = df$date[df$totalSSRetired == 1],
-       y = df$diffDJIopen[df$totalSSRetiredPos == 1],
-       pch = 24,
-       col = 'darkgreen',
-       cex = 0.8,
-       lwd = 3)
-points(x = df$date[df$totalSSRetiredPos == 0],
-       y = df$diffDJIopen[df$totalSSRetiredPos == 0],
-       pch = 25,
-       col = 'darkred',
-       cex = 0.8,
-       lwd = 3
-       )
-
-legend('topleft',
-       legend = c('Monthly Change in DJI Open', c('Rise in Retired', 'Fall in Retired')),
-       lty = c(1, c(NA, NA)),
-       pch = c(NA, c(24, 25)),
-       col = c('blue', c('darkgreen', 'darkred')),
-       bg = c(NA, c('darkgreen', 'darkred')),
-       lwd = c(2, c(3, 3))
-       )
-title(main = 'Change in DJIOpen')
-
-plot(x = df$date, y = df$diffDJIClose, col = 'blue', lwd = 1, type = 'l', ylab = 'US Dollars ($)', xlab = 'Date')
-points(x = df$date[df$totalSSRetiredPos == 1], y = df$diffDJIClose[df$totalSSRetiredPos == 1], pch = 24, col = 'darkgreen', cex = 0.8, lwd = 3)
-points(x = df$date[df$totalSSRetiredPos == 0], y = df$diffDJIClose[df$totalSSRetiredPos == 0], pch = 25, col = 'darkred', cex = 0.8, lwd = 3)
-legend('topleft',
-       legend = c('Monthly Change in DJI Close', c('Rise in Retired', 'Fall in Retired')),
-       lty = c(1, c(NA, NA)),
-       pch = c(NA, c(24, 25)),
-       col = c('blue', c('darkgreen', 'darkred')),
-       bg = c(NA, c('darkgreen', 'darkred')),
-       lwd = c(2, c(3, 3))
+plot(
+  x = df$date,
+  y = df$diffRealDJIclose,
+  col = 'blue',
+  lwd = 1,
+  type = 'l',
+  ylab = 'US Dollars ($)',
+  xlab = 'Date'
 )
-title(main = 'Change in DJIClose')
+points(
+  x = df$date[df$postotalSSRetired == 1],
+  y = df$diffRealDJIclose[df$postotalSSRetired == 1],
+  pch = 24,
+  col = 'darkgreen',
+  cex = 0.8,
+  lwd = 3
+)
+points(
+  x = df$date[df$postotalSSRetired == 0],
+  y = df$diffRealDJIclose[df$postotalSSRetired == 0],
+  pch = 25,
+  col = 'darkred',
+  cex = 0.8,
+  lwd = 3
+)
+legend(
+  'topleft',
+  legend = c(
+    'Monthly Change in DJI Close',
+    c('Positive ∆ in SS', 'Negative ∆ in SS')
+  ),
+  lty = c(1, c(NA, NA)),
+  pch = c(NA, c(24, 25)),
+  col = c('blue', c('darkgreen', 'darkred')),
+  bg = c(NA, c('darkgreen', 'darkred')),
+  lwd = c(2, c(3, 3))
+)
+title(main = 'Change in DJI Close')
 
 # Timeseries Evaluation ####
 library(tseries)
@@ -186,27 +198,20 @@ diffDJIOpen <-
     df$diffDJIOpen,
     start = c(1985, 1),
     end = c(2018, 9),
-    frequency = 12
-  )
+    frequency = 12)
 
 diffTotalSS <-
   ts(
     df$diffTotalSSRetired,
     start = c(1985, 1),
     end = c(2018, 9),
-    frequency = 12
-  )
+    frequency = 12)
 PosRet <-
   ts(
     df$totalSSRetiredPos,
     start = c(1985, 1),
     end = c(2018, 9),
-    frequency = 12
-  )
-
-plot(diffDJIOpen, col = 'blue', lwd = 1, ylab = 'Changes in DJI Open Monthly')
-points(x = df$date[PosRet == 0], y = diffDJIOpen[PosRet == 0], pch = 19, col = 'darkred', cex = 0.5)
-points(diffDJIOpen[PosRet == 1], pch = 19, col = 'darkgreen', cex = 0.5)
+    frequency = 12)
 
 
 plot(stl(DJIOpen, s.window = "period"), lwd = 1)
