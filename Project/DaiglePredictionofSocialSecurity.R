@@ -34,10 +34,6 @@ dollarless <- function(x) {
   x
 }
 
-positives <- function(x, df, newname, comparison) {
-  df$newname <- 0
-  df$newname[df$comparison > 0] <- 1
-}
 
 #loops to apply functions
 for (i in 15:20) {
@@ -51,37 +47,117 @@ for (i in 15:20) {
 for (i in 15:20) {
   df[,i] <- as.numeric(df[,i])
 }
-
+# Names with Index ####
+# 1 date                     : Date
+# 2 DJIopen                  : num
+# 3 DJIhigh                  : num
+# 4 DJIlow                   : num
+# 5 DJIclose                 : num
+# 6 DJIadjClose              : num
+# 7 DJIvolume                : num
+# 8 SPopen                   : num
+# 9 SPhigh                   : num
+# 10 SPlow                    : num
+# 11 SPclose                  : num
+# 12 SPadjClose               : num
+# 13 SPvolume                 : num
+# 14 fedFundRate              : num
+# 15 totalSSRetired           : num
+# 16 averageSSRetiredPay      : num
+# 17 totalMaleSSRetired       : num
+# 18 averageMaleSSRetiredPay  : num 
+# 19 totalFemaleSSRetired     : num
+# 20 averageFemaleSSRetiredPay: num
+# 21 cpi                      : num
+#
+# Names with Index ####
+df <- df[, c(1, 15, 17, 19, 21, 14, 7, 13, 2:6, 8:12, 16, 18, 20)]
+# 1 date                     : Date
+# 2 totalSSRetired           : num
+# 3 totalMaleSSRetired       : num
+# 4 totalFemaleSSRetired     : num
+# 5 cpi                      : num
+# 6 fedFundRate              : num
+# 7 DJIvolume                : num
+# 8 SPvolume                 : num
+# 9 DJIopen                  : num
+# 10 DJIhigh                  : num
+# 11 DJIlow                   : num
+# 12 DJIclose                 : num
+# 13 DJIadjClose              : num
+# 14 SPopen                   : num
+# 15 SPhigh                   : num
+# 16 SPlow                    : num
+# 17 SPclose                  : num
+# 18 SPadjClose               : num
+# 19 averageSSRetiredPay      : num
+# 20 averageMaleSSRetiredPay  : num
+# 21 averageFemaleSSRetiredPay: num
+#
 # Variable Creation ####
-
 # CPI Inflator
-latestDate <- tail(df$date, n=1)
+latestDate <- tail(df$date, n = 1)
+
 baseCpi <- df$cpi[df$date == latestDate]
 df$inflator <- baseCpi / df$cpi
-realNames <- paste('real', colnames(df[,c(2:6, 8:12, 16,18,20)]),sep = "")
 
-df[, realNames] <-df$inflator * df[,c(2:6, 8:12, 16,18,20)]
+df <- df[, c(1:6, 22, 7:21)]
+
+realNames <-
+  paste('real',
+        colnames(df[, 10:22]),
+        sep = "")
+
+df[, realNames] <- df$inflator * df[10:22]
 
 # Differences
-diffNames <- paste('diff', c(colnames(df[,c(2:6, 8:12, 16,18,20)]),  paste('Real', colnames(df[,c(2:6, 8:12, 16,18,20)]),sep = "")), sep = "")
-df[,diffNames] <- rep(NA, nrow(df))
-for (i in c(36:61)) {
-  df[,i][2:nrow(df)] <- diff(df[,i-34], lag = 1)
+diffNames <-
+  paste('diff',
+        c(colnames(df[10:22]),
+          paste('Real', colnames(df[10:22]),
+                sep = "")),
+        sep = "")
+df[, diffNames] <- rep(NA, nrow(df))
+for (i in 36:61) {
+  df[, i][2:nrow(df)] <- diff(df[, i - 26], lag = 1)
 }
 
 # Positive Indicator
-posNames <- paste('pos', c(colnames(df[,c(2:6, 8:12, 16,18,20)]),  paste('Real', colnames(df[,c(2:6, 8:12, 16,18,20)]),sep = "")), sep = "")
+posNames <- paste('pos',
+                  c(colnames(df[10:22]),
+                    paste('Real', colnames(df[10:22]),sep = "")),
+                  sep = "")
 df[ ,posNames] <- rep(0, nrow(df))
-for (i in c(62:87)) {
-  df[,i][df[,i-26] > 0] <- 1
+
+for (i in 62:87) {
+  df[, i][df[, i - 26] > 0] <- 1
 }
 
 # Visulizations ####
-plot(x = df$date, y = df$diffDJIOpen, col = 'blue', lwd = 1, type = 'l', ylab = 'US Dollars ($)', xlab = 'Date')
-points(x = df$date[df$totalSSRetiredPos == 1], y = df$diffDJIOpen[df$totalSSRetiredPos == 1], pch = 24, col = 'darkgreen', cex = 0.8, lwd = 3)
-points(x = df$date[df$totalSSRetiredPos == 0], y = df$diffDJIOpen[df$totalSSRetiredPos == 0], pch = 25, col = 'darkred', cex = 0.8, lwd = 3)
+plot(x = df$date,
+     y = df$diffDJIopen,
+     col = 'blue',
+     lwd = 1,
+     type = 'l',
+     ylab = 'US Dollars ($)',
+     xlab = 'Date')
+
+points(x = df$date[df$totalSSRetired == 1],
+       y = df$diffDJIopen[df$totalSSRetiredPos == 1],
+       pch = 24,
+       col = 'darkgreen',
+       cex = 0.8,
+       lwd = 3)
+points(x = df$date[df$totalSSRetiredPos == 0],
+       y = df$diffDJIopen[df$totalSSRetiredPos == 0],
+       pch = 25,
+       col = 'darkred',
+       cex = 0.8,
+       lwd = 3
+       )
+
 legend('topleft',
-       legend = c('Monthly Change in DJI OPEN', c('Rise in Retired', 'Fall in Retired')),
+       legend = c('Monthly Change in DJI Open', c('Rise in Retired', 'Fall in Retired')),
        lty = c(1, c(NA, NA)),
        pch = c(NA, c(24, 25)),
        col = c('blue', c('darkgreen', 'darkred')),
