@@ -448,7 +448,8 @@ dfPerc <- dfStationary[,c(2:5, 46:58)]
 # Run the selections
 regFitSelect <- regsubsets(
   postotalSSRetired~.,
-  data=dfDiff)
+  data=dfDiff,
+  nvmax=17)
 # regFitSelect <- regsubsets(
 #   postotalSSRetired~.,
 #   data=dfDiff,
