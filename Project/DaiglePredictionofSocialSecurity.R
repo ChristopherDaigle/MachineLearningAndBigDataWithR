@@ -8,6 +8,7 @@
 rm(list = ls())
 library(tseries)
 library(quantmod)
+library(data.table)
 setwd('~/Git/MachineLearningAndBigDataWithR/Data')
 dataName <- 'assembled.csv'
 df <- read.csv(dataName, stringsAsFactors = FALSE)
