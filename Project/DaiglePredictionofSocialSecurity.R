@@ -9,6 +9,7 @@ rm(list = ls())
 library(tseries)
 library(quantmod)
 library(data.table)
+library(leaps)
 setwd('~/Git/MachineLearningAndBigDataWithR/Data')
 dataName <- 'assembled.csv'
 df <- read.csv(dataName, stringsAsFactors = FALSE)
@@ -300,37 +301,33 @@ plot(log(fedFund),
 abline(reg = lm(log(fedFund) ~ time(log(fedFund))), lwd = 3)
 title(main = 'Log of Federal Funds Rate')
 
-# Hypothesis Tests ####
-adf.test(realDJIOpen, alternative = 'stationary')
-# Augmented Dickey-Fuller Test
-# Fail to reject the null (0.8076 = p > 0.05), so it's likely non-stationary
-adf.test(log(realDJIOpen), alternative = 'stationary')
-# Fail to reject the null (0.4473 = p > 0.05), so it's likely non-stationary still with the transform
-adf.test(percRealDJIOpen, alternative = 'stationary')
-# Reject the null (0.01 = p < 0.05), so it's likely stationary still with the transform
-#' Will use percRealDJIOpen as a predictor
-
-adf.test(realSPOpen, alternative = 'stationary')
-# Augmented Dickey-Fuller Test
-# Fail to reject the null (0.783 = p > 0.05), so it's likely non-stationary
-adf.test(log(realSPOpen), alternative = 'stationary')
-# Fail to reject the null (0.5234 = p > 0.05), so it's likely non-stationary still with the transform
-adf.test(percRealSPOpen, alternative = 'stationary')
-# Reject the null (0.01 = p < 0.05), so it's likely stationary still with the transform
-#' Will use percRealSPOpen as a predictor
-
-adf.test(fedFund, alternative = 'stationary')
-# Fail to reject the null (0.05242 = p > 0.05), so it's on the cusp of being likely non-stationary
-#' Will try model with fedFund as a predictor
-adf.test(log(fedFund), alternative = 'stationary')
-# Fail to reject the null (0.6728 = p > 0.05), so it's likely non-stationary with the transform
-
 # Remove nominal values aside indicators of positive change
-df2 <- df1[, c(1:18, 32:44, 58:96, 110:122)]
+df2 <- df1[, c(1, 8:10, 11:18, 32:44, 58:96, 110:122)]
+# remove components of the total SS Retirees (male + female = total) and percent increases and decreases (indicates pos... = 0|1) and the inflator
+df3 <- df2[, c(1:2, 8:9, 13:77)]
+
+# Hypothesis Tests ####
+# Stationarity Loop Testing
+statVars <- matrix(data = NA, nrow = 68, ncol = 2)
+df3TS <- ts(
+  df3,
+  start = c(1985, 12),
+  end = c(2018, 9),
+  frequency = 12
+)
+for (i in c(1:68)) {
+  statVars[i,1] <- i+1
+  statVars[i,2] <- adf.test(df3TS[,i+1], alternative = 'stationary')[[4]]
+}
+# Reject the null when p < 0.05. So, the variables associated with this are
+# likely stationary and useful for prediction of time series
+dfStatSelect<- statVars[,1][statVars[,2] < 0.05]
+dfStationary<- df3[,c(1,dfStatSelect)]
+
 # Visualizations ####
 plot(
-  x = df2$date,
-  y = df2$percChangeRealDJIopen,
+  x = dfStationary$date,
+  y = dfStationary$percChangeRealDJIopen,
   col = 'blue',
   lwd = 1,
   type = 'l',
@@ -338,16 +335,16 @@ plot(
   xlab = 'Date'
 )
 points(
-  x = df2$date[df$postotalSSRetired == 1],
-  y = df2$percChangeRealDJIopen[df2$postotalSSRetired == 1],
+  x = dfStationary$date[df$postotalSSRetired == 1],
+  y = dfStationary$percChangeRealDJIopen[dfStationary$postotalSSRetired == 1],
   pch = 24,
   col = 'darkgreen',
   cex = 0.8,
   lwd = 3
 )
 points(
-  x = df2$date[df2$postotalSSRetired == 0],
-  y = df2$percChangeRealDJIopen[df2$postotalSSRetired == 0],
+  x = dfStationary$date[dfStationary$postotalSSRetired == 0],
+  y = dfStationary$percChangeRealDJIopen[dfStationary$postotalSSRetired == 0],
   pch = 25,
   col = 'darkred',
   cex = 0.8,
@@ -368,8 +365,8 @@ legend(
 title(main = 'Monthly % Change in Real DJI Open (Sep 2018 USD)')
 
 plot(
-  x = df2$date,
-  y = df2$percChangeRealSPopen,
+  x = dfStationary$date,
+  y = dfStationary$percChangeRealSPopen,
   col = 'blue',
   lwd = 1,
   type = 'l',
@@ -377,16 +374,16 @@ plot(
   xlab = 'Date'
 )
 points(
-  x = df2$date[df$postotalSSRetired == 1],
-  y = df2$percChangeRealSPopen[df2$postotalSSRetired == 1],
+  x = dfStationary$date[df$postotalSSRetired == 1],
+  y = dfStationary$percChangeRealSPopen[dfStationary$postotalSSRetired == 1],
   pch = 24,
   col = 'darkgreen',
   cex = 0.8,
   lwd = 3
 )
 points(
-  x = df2$date[df2$postotalSSRetired == 0],
-  y = df2$percChangeRealSPopen[df2$postotalSSRetired == 0],
+  x = dfStationary$date[dfStationary$postotalSSRetired == 0],
+  y = dfStationary$percChangeRealSPopen[dfStationary$postotalSSRetired == 0],
   pch = 25,
   col = 'darkred',
   cex = 0.8,
@@ -407,8 +404,8 @@ legend(
 title(main = 'Monthly % Change in Real S&P500 Open (Sep 2018 USD)')
 
 plot(
-  x = df2$date,
-  y = df2$fedFundRate,
+  x = dfStationary$date,
+  y = dfStationary$fedFundRate,
   col = 'blue',
   lwd = 1,
   type = 'l',
@@ -416,16 +413,16 @@ plot(
   xlab = 'Date'
 )
 points(
-  x = df2$date[df$postotalSSRetired == 1],
-  y = df2$fedFundRate[df2$postotalSSRetired == 1],
+  x = dfStationary$date[df$postotalSSRetired == 1],
+  y = dfStationary$fedFundRate[dfStationary$postotalSSRetired == 1],
   pch = 24,
   col = 'darkgreen',
   cex = 0.8,
   lwd = 3
 )
 points(
-  x = df2$date[df2$postotalSSRetired == 0],
-  y = df2$fedFundRate[df2$postotalSSRetired == 0],
+  x = dfStationary$date[dfStationary$postotalSSRetired == 0],
+  y = dfStationary$fedFundRate[dfStationary$postotalSSRetired == 0],
   pch = 25,
   col = 'darkred',
   cex = 0.8,
@@ -443,4 +440,142 @@ legend(
 )
 title(main = 'Federal Funds Rate')
 
+# Selection ####
+# Set a few dataframes for different variables
+dfDiff <- dfStationary[,c(2:5,7:19)]
+dfPosChange <- dfStationary[,c(2:5, 20:45)]
+dfPerc <- dfStationary[,c(2:5, 46:58)]
+# Run the selections
+regFitSelect <- regsubsets(
+  postotalSSRetired~.,
+  data=dfDiff)
+# regFitSelect <- regsubsets(
+#   postotalSSRetired~.,
+#   data=dfDiff,
+#   really.big=T,
+#   intercept = F, nvmax=58) 
+regSummary <- summary(regFitSelect)
+names(regSummary)
+regSummary$rsq                          # rsq for the best model with given number of predictors.
+regSummary$adjr2
+
+par(mfrow=c(2,2))
+aRSQ <- which.max(regSummary$rsq)
+aARSQ <- which.max(regSummary$adjr2)
+aCP <- which.min(regSummary$cp)
+aBIC <- which.min(regSummary$bic)
+aRSS <- which.min(regSummary$rss)
+
+par(mfrow = c(2, 2))
+
+plot(
+  regSummary$rsq,
+  xlab = "Number of regressors",
+  ylab = "R-square",
+  type = "l"
+)
+points(
+  aRSQ,
+  regSummary$rsq[aRSQ],
+  col = "red",
+  cex = 2,
+  pch = 20
+)
+text(aRSQ,
+     regSummary$rsq[aRSQ],
+     labels = aRSQ,
+     pos = 1)
+
+plot(
+  regSummary$adjr2,
+  xlab = "Number of regressors",
+  ylab = "Adjusted R-square",
+  type = "l"
+)
+points(
+  aARSQ,
+  regSummary$adjr2[aARSQ],
+  col = "red",
+  cex = 2,
+  pch = 20
+)
+text(aARSQ,
+     regSummary$adjr2[aARSQ],
+     labels = aARSQ,
+     pos = 1)
+
+plot(regSummary$cp,
+     xlab = "Number of regressors",
+     ylab = "Cp",
+     type = "l")
+points(
+  aCP,
+  regSummary$cp[aCP],
+  col = "red",
+  cex = 2,
+  pch = 20
+)
+text(aCP,
+     regSummary$cp[aCP],
+     labels = aCP,
+     pos = 3)
+
+plot(
+  regSummary$bic,
+  xlab = "Number of regressors",
+  ylab = "BIC",
+  type = "l"
+)
+points(
+  aBIC,
+  regSummary$bic[aBIC],
+  col = "red",
+  cex = 2,
+  pch = 20
+)
+text(aBIC,
+     regSummary$bic[aBIC],
+     labels = aBIC,
+     pos = 3)
+
+par(mfrow = c(1, 1))
+plot(
+  regSummary$rss,
+  xlab = "Number of regressors",
+  ylab = "RSS",
+  type = "l"
+)
+points(
+  aRSS,
+  regSummary$rss[aRSS],
+  col = "red",
+  cex = 2,
+  pch = 20
+)
+text(aRSS,
+     regSummary$rss[aRSS],
+     labels = aRSS,
+     pos = 3)
+
+par(mfrow = c(2, 2))
+plot(regFitSelect, scale = "r2")
+plot(regFitSelect, scale = "adjr2")
+plot(regFitSelect, scale = "Cp")
+plot(regFitSelect, scale = "bic")
+
+
 # Model ####
+# Setting train/test split
+set.seed(1)
+trainSample <- sample(1:nrow(dfStationary), round(nrow(dfStationary)/2), replace = F)
+trainData <- dfStationary[trainSample,]
+testData <- dfStationary[-trainSample,]
+
+trainX <- trainData[,c(1, 3:69)]
+trainY <- trainData[,c(1:2)]
+testX <- testData[,c(1, 3:69)]
+trainY <- testData[,c(1:2)]
+
+# Basic logistic
+glmFit <- glm(postotalSSRetired ~ realDJIopen + realDJIhigh + realDJIlow + realDJIclose + realSPopen, family = binomial, data = dfStationary)
+summary(glmFit)
