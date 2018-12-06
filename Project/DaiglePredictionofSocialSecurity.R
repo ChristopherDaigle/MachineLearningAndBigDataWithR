@@ -10,6 +10,7 @@ library(tseries)
 library(quantmod)
 library(data.table)
 library(leaps)
+library(plm)
 setwd('~/Git/MachineLearningAndBigDataWithR/Data')
 dataName <- 'assembled.csv'
 df <- read.csv(dataName, stringsAsFactors = FALSE)
@@ -223,6 +224,14 @@ fedFund <-
     frequency = 12
   )
 
+totalRetired <-
+  ts(
+    df$totalSSRetired,
+    start = c(1985, 1),
+    end = c(2018, 9),
+    frequency = 12
+  )
+
 
 plot(stl(realDJIOpen, s.window = "period"), lwd = 1)
 title(main = 'Seasonal Decomp of Real DJI Open (Sep 2018 Dollars)')
@@ -300,6 +309,22 @@ plot(log(fedFund),
      ylab = 'Percent (%)')
 abline(reg = lm(log(fedFund) ~ time(log(fedFund))), lwd = 3)
 title(main = 'Log of Federal Funds Rate')
+
+plot(stl(totalRetired, s.window = "period"), lwd = 1)
+title(main = 'Seasonal Decomp of Total Number of Social Security Recipients')
+plot(totalRetired,
+     col = 'blue',
+     lwd = 3,
+     ylab = 'Number of People')
+abline(reg = lm(totalRetired ~ time(totalRetired)), lwd = 3)
+title(main = 'Total Number of Social Security Recipients')
+
+plot(log(totalRetired),
+     col = 'blue',
+     lwd = 3,
+     ylab = 'Percent (%)')
+abline(reg = lm(log(totalRetired) ~ time(log(totalRetired))), lwd = 3)
+title(main = 'Log of Total Number of Social Security Recipients')
 
 # Remove nominal values aside indicators of positive change
 df2 <- df1[, c(1, 8:10, 11:18, 32:44, 58:96, 110:122)]
@@ -440,24 +465,38 @@ legend(
 )
 title(main = 'Federal Funds Rate')
 
+plot(
+  x = df$date,
+  y = df$totalSSRetired,
+  col = 'blue',
+  lwd = 1,
+  type = 'l',
+  ylab = 'Number of People',
+  xlab = 'Date'
+)
+legend(
+  'bottomright',
+  legend = c('Number of SS Recipients'),
+  lty = c(1),
+  col = c('blue'),
+  lwd = c(2)
+)
+title(main = 'Total Retired on Social Security')
+
 # Selection ####
 # Set a few dataframes for different variables
 dfDiff <- dfStationary[,c(2:5,7:19)]
 dfPosChange <- dfStationary[,c(2:5, 20:45)]
 dfPerc <- dfStationary[,c(2:5, 46:58)]
 # Run the selections
+# Differences ####
 regFitSelect <- regsubsets(
   postotalSSRetired~.,
   data=dfDiff,
   nvmax=17)
-# regFitSelect <- regsubsets(
-#   postotalSSRetired~.,
-#   data=dfDiff,
-#   really.big=T,
-#   intercept = F, nvmax=58) 
 regSummary <- summary(regFitSelect)
 names(regSummary)
-regSummary$rsq                          # rsq for the best model with given number of predictors.
+regSummary$rsq
 regSummary$adjr2
 
 par(mfrow=c(2,2))
@@ -471,7 +510,7 @@ par(mfrow = c(2, 2))
 
 plot(
   regSummary$rsq,
-  xlab = "Number of regressors",
+  xlab = "Number of regressors - Differences",
   ylab = "R-square",
   type = "l"
 )
@@ -489,7 +528,7 @@ text(aRSQ,
 
 plot(
   regSummary$adjr2,
-  xlab = "Number of regressors",
+  xlab = "Number of regressors - Differences",
   ylab = "Adjusted R-square",
   type = "l"
 )
@@ -506,7 +545,7 @@ text(aARSQ,
      pos = 1)
 
 plot(regSummary$cp,
-     xlab = "Number of regressors",
+     xlab = "Number of regressors - Differences",
      ylab = "Cp",
      type = "l")
 points(
@@ -523,7 +562,7 @@ text(aCP,
 
 plot(
   regSummary$bic,
-  xlab = "Number of regressors",
+  xlab = "Number of regressors - Differences",
   ylab = "BIC",
   type = "l"
 )
@@ -542,7 +581,120 @@ text(aBIC,
 par(mfrow = c(1, 1))
 plot(
   regSummary$rss,
-  xlab = "Number of regressors",
+  xlab = "Number of regressors - Differences",
+  ylab = "RSS",
+  type = "l"
+)
+points(
+  aRSS,
+  regSummary$rss[aRSS],
+  col = "red",
+  cex = 2,
+  pch = 20
+)
+text(aRSS,
+     regSummary$rss[aRSS],
+     labels = aRSS,
+     pos = 3)
+
+par(mfrow = c(2, 2))
+plot(regFitSelect, scale = "r2")
+plot(regFitSelect, scale = "adjr2")
+plot(regFitSelect, scale = "Cp")
+plot(regFitSelect, scale = "bic")
+# Percentages ####
+regFitSelect <- regsubsets(
+  postotalSSRetired~.,
+  data=dfPerc,
+  nvmax=17)
+regSummary <- summary(regFitSelect)
+names(regSummary)
+regSummary$rsq
+regSummary$adjr2
+
+par(mfrow=c(2,2))
+aRSQ <- which.max(regSummary$rsq)
+aARSQ <- which.max(regSummary$adjr2)
+aCP <- which.min(regSummary$cp)
+aBIC <- which.min(regSummary$bic)
+aRSS <- which.min(regSummary$rss)
+
+par(mfrow = c(2, 2))
+
+plot(
+  regSummary$rsq,
+  xlab = "Number of regressors - Percent Changes",
+  ylab = "R-square",
+  type = "l"
+)
+points(
+  aRSQ,
+  regSummary$rsq[aRSQ],
+  col = "red",
+  cex = 2,
+  pch = 20
+)
+text(aRSQ,
+     regSummary$rsq[aRSQ],
+     labels = aRSQ,
+     pos = 1)
+
+plot(
+  regSummary$adjr2,
+  xlab = "Number of regressors - Percent Changes",
+  ylab = "Adjusted R-square",
+  type = "l"
+)
+points(
+  aARSQ,
+  regSummary$adjr2[aARSQ],
+  col = "red",
+  cex = 2,
+  pch = 20
+)
+text(aARSQ,
+     regSummary$adjr2[aARSQ],
+     labels = aARSQ,
+     pos = 1)
+
+plot(regSummary$cp,
+     xlab = "Number of regressors - Percent Changes",
+     ylab = "Cp",
+     type = "l")
+points(
+  aCP,
+  regSummary$cp[aCP],
+  col = "red",
+  cex = 2,
+  pch = 20
+)
+text(aCP,
+     regSummary$cp[aCP],
+     labels = aCP,
+     pos = 3)
+
+plot(
+  regSummary$bic,
+  xlab = "Number of regressors - Percent Changes",
+  ylab = "BIC",
+  type = "l"
+)
+points(
+  aBIC,
+  regSummary$bic[aBIC],
+  col = "red",
+  cex = 2,
+  pch = 20
+)
+text(aBIC,
+     regSummary$bic[aBIC],
+     labels = aBIC,
+     pos = 3)
+
+par(mfrow = c(1, 1))
+plot(
+  regSummary$rss,
+  xlab = "Number of regressors - Percent Changes",
   ylab = "RSS",
   type = "l"
 )
@@ -572,11 +724,37 @@ trainSample <- sample(1:nrow(dfStationary), round(nrow(dfStationary)/2), replace
 trainData <- dfStationary[trainSample,]
 testData <- dfStationary[-trainSample,]
 
-trainX <- trainData[,c(1, 3:69)]
+trainX <- trainData[,c(1, 3:58)]
 trainY <- trainData[,c(1:2)]
-testX <- testData[,c(1, 3:69)]
+testX <- testData[,c(1, 3:58)]
 trainY <- testData[,c(1:2)]
 
-# Basic logistic
-glmFit <- glm(postotalSSRetired ~ realDJIopen + realDJIhigh + realDJIlow + realDJIclose + realSPopen, family = binomial, data = dfStationary)
-summary(glmFit)
+# Logistic ####
+glmFit <- glm(postotalSSRetired ~ diffRealDJIopen + diffRealDJIhigh + diffRealSPopen + diffRealSPhigh + diffRealaverageFemaleSSRetiredPay + diffRealDJIclose, family = binomial, data = dfStationary)
+summary(glmFit, diagnostics=TRUE)
+
+glmProbs <- predict(glmFit, type = 'response')
+glmProbs[1:10]
+
+glmPred <- rep(0, dim(dfStationary)[2])
+glmPred[glmProbs > 0.5] <- 1
+table(glmPred)
+table(glmPred, dfStationary[,2])
+
+mean(glmPred == dfStationary[,2])
+# Testing Prediction
+train <- subset(dfStationary, dfStationary$date < as.Date('2010-04-08'))
+test3rdQuart <- subset(dfStationary, dfStationary$date >= as.Date('2010-04-08'))
+
+glmFit <- glm(postotalSSRetired ~ diffRealDJIopen + diffRealDJIhigh + diffRealSPopen + diffRealSPhigh + diffRealaverageFemaleSSRetiredPay + diffRealDJIclose, family = binomial, data = train)
+glmProbs <- predict(glmFit, test3rdQuart, type = 'response') # setting prediction for the testing set FROM the training set
+
+glmPred <- rep(0, 101)
+glmPred[glmProbs > 0.5] = 1
+
+table(glmPred, test3rdQuart$postotalSSRetired)
+mean(glmPred == test3rdQuart$postotalSSRetired)
+#' Predicition accuracy is approximately 74% with a train/test split at the 3rd quartile mark of the dates. Seems good
+
+# Basic ARIMA
+
