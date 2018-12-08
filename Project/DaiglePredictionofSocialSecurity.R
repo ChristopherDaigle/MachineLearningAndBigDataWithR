@@ -6,11 +6,13 @@
 
 # Prepare workspace ####
 rm(list = ls())
+knitr::opts_chunk$set(message = FALSE)
 library(tseries)
 library(quantmod)
 library(data.table)
 library(leaps)
 library(plm)
+library(class)
 setwd('~/Git/MachineLearningAndBigDataWithR/Data')
 dataName <- 'assembled.csv'
 df <- read.csv(dataName, stringsAsFactors = FALSE)
@@ -490,9 +492,11 @@ dfPosChange <- dfStationary[,c(2:5, 20:45)]
 dfPerc <- dfStationary[,c(2:5, 46:58)]
 # Run the selections
 # Differences ####
+# SeqRep
 regFitSelect <- regsubsets(
   postotalSSRetired~.,
   data=dfDiff,
+  method= 'seqrep',
   nvmax=17)
 regSummary <- summary(regFitSelect)
 names(regSummary)
@@ -510,7 +514,7 @@ par(mfrow = c(2, 2))
 
 plot(
   regSummary$rsq,
-  xlab = "Number of regressors - Differences",
+  xlab = "Number of regressors - SeqRep - Differences",
   ylab = "R-square",
   type = "l"
 )
@@ -528,7 +532,7 @@ text(aRSQ,
 
 plot(
   regSummary$adjr2,
-  xlab = "Number of regressors - Differences",
+  xlab = "Number of regressors - SeqRep - Differences",
   ylab = "Adjusted R-square",
   type = "l"
 )
@@ -545,7 +549,7 @@ text(aARSQ,
      pos = 1)
 
 plot(regSummary$cp,
-     xlab = "Number of regressors - Differences",
+     xlab = "Number of regressors - SeqRep - Differences",
      ylab = "Cp",
      type = "l")
 points(
@@ -562,7 +566,7 @@ text(aCP,
 
 plot(
   regSummary$bic,
-  xlab = "Number of regressors - Differences",
+  xlab = "Number of regressors - SeqRep - Differences",
   ylab = "BIC",
   type = "l"
 )
@@ -581,7 +585,7 @@ text(aBIC,
 par(mfrow = c(1, 1))
 plot(
   regSummary$rss,
-  xlab = "Number of regressors - Differences",
+  xlab = "Number of regressors - SeqRep - Differences",
   ylab = "RSS",
   type = "l"
 )
@@ -602,7 +606,358 @@ plot(regFitSelect, scale = "r2")
 plot(regFitSelect, scale = "adjr2")
 plot(regFitSelect, scale = "Cp")
 plot(regFitSelect, scale = "bic")
-# Percentages ####
+
+valuesSeqRep <- c(names(coef(regFitSelect, id = 4))[-1])
+# Forward
+regFitSelect <- regsubsets(
+  postotalSSRetired~.,
+  data=dfDiff,
+  method= 'forward',
+  nvmax=17)
+regSummary <- summary(regFitSelect)
+names(regSummary)
+regSummary$rsq
+regSummary$adjr2
+
+par(mfrow=c(2,2))
+aRSQ <- which.max(regSummary$rsq)
+aARSQ <- which.max(regSummary$adjr2)
+aCP <- which.min(regSummary$cp)
+aBIC <- which.min(regSummary$bic)
+aRSS <- which.min(regSummary$rss)
+
+par(mfrow = c(2, 2))
+
+plot(
+  regSummary$rsq,
+  xlab = "Number of regressors - Forward - Differences",
+  ylab = "R-square",
+  type = "l"
+)
+points(
+  aRSQ,
+  regSummary$rsq[aRSQ],
+  col = "red",
+  cex = 2,
+  pch = 20
+)
+text(aRSQ,
+     regSummary$rsq[aRSQ],
+     labels = aRSQ,
+     pos = 1)
+
+plot(
+  regSummary$adjr2,
+  xlab = "Number of regressors - Forward - Differences",
+  ylab = "Adjusted R-square",
+  type = "l"
+)
+points(
+  aARSQ,
+  regSummary$adjr2[aARSQ],
+  col = "red",
+  cex = 2,
+  pch = 20
+)
+text(aARSQ,
+     regSummary$adjr2[aARSQ],
+     labels = aARSQ,
+     pos = 1)
+
+plot(regSummary$cp,
+     xlab = "Number of regressors - Forward - Differences",
+     ylab = "Cp",
+     type = "l")
+points(
+  aCP,
+  regSummary$cp[aCP],
+  col = "red",
+  cex = 2,
+  pch = 20
+)
+text(aCP,
+     regSummary$cp[aCP],
+     labels = aCP,
+     pos = 3)
+
+plot(
+  regSummary$bic,
+  xlab = "Number of regressors - Forward - Differences",
+  ylab = "BIC",
+  type = "l"
+)
+points(
+  aBIC,
+  regSummary$bic[aBIC],
+  col = "red",
+  cex = 2,
+  pch = 20
+)
+text(aBIC,
+     regSummary$bic[aBIC],
+     labels = aBIC,
+     pos = 3)
+
+par(mfrow = c(1, 1))
+plot(
+  regSummary$rss,
+  xlab = "Number of regressors - Forward - Differences",
+  ylab = "RSS",
+  type = "l"
+)
+points(
+  aRSS,
+  regSummary$rss[aRSS],
+  col = "red",
+  cex = 2,
+  pch = 20
+)
+text(aRSS,
+     regSummary$rss[aRSS],
+     labels = aRSS,
+     pos = 3)
+
+par(mfrow = c(2, 2))
+plot(regFitSelect, scale = "r2")
+plot(regFitSelect, scale = "adjr2")
+plot(regFitSelect, scale = "Cp")
+plot(regFitSelect, scale = "bic")
+
+valuesForward <- c(names(coef(regFitSelect, id = 5))[-1])
+# Backward
+regFitSelect <- regsubsets(
+  postotalSSRetired~.,
+  data=dfDiff,
+  method= 'backward',
+  nvmax=17)
+regSummary <- summary(regFitSelect)
+names(regSummary)
+regSummary$rsq
+regSummary$adjr2
+
+par(mfrow=c(2,2))
+aRSQ <- which.max(regSummary$rsq)
+aARSQ <- which.max(regSummary$adjr2)
+aCP <- which.min(regSummary$cp)
+aBIC <- which.min(regSummary$bic)
+aRSS <- which.min(regSummary$rss)
+
+par(mfrow = c(2, 2))
+
+plot(
+  regSummary$rsq,
+  xlab = "Number of regressors - Backward - Differences",
+  ylab = "R-square",
+  type = "l"
+)
+points(
+  aRSQ,
+  regSummary$rsq[aRSQ],
+  col = "red",
+  cex = 2,
+  pch = 20
+)
+text(aRSQ,
+     regSummary$rsq[aRSQ],
+     labels = aRSQ,
+     pos = 1)
+
+plot(
+  regSummary$adjr2,
+  xlab = "Number of regressors - Backward - Differences",
+  ylab = "Adjusted R-square",
+  type = "l"
+)
+points(
+  aARSQ,
+  regSummary$adjr2[aARSQ],
+  col = "red",
+  cex = 2,
+  pch = 20
+)
+text(aARSQ,
+     regSummary$adjr2[aARSQ],
+     labels = aARSQ,
+     pos = 1)
+
+plot(regSummary$cp,
+     xlab = "Number of regressors - Backward - Differences",
+     ylab = "Cp",
+     type = "l")
+points(
+  aCP,
+  regSummary$cp[aCP],
+  col = "red",
+  cex = 2,
+  pch = 20
+)
+text(aCP,
+     regSummary$cp[aCP],
+     labels = aCP,
+     pos = 3)
+
+plot(
+  regSummary$bic,
+  xlab = "Number of regressors - Backward - Differences",
+  ylab = "BIC",
+  type = "l"
+)
+points(
+  aBIC,
+  regSummary$bic[aBIC],
+  col = "red",
+  cex = 2,
+  pch = 20
+)
+text(aBIC,
+     regSummary$bic[aBIC],
+     labels = aBIC,
+     pos = 3)
+
+par(mfrow = c(1, 1))
+plot(
+  regSummary$rss,
+  xlab = "Number of regressors - Backward - Differences",
+  ylab = "RSS",
+  type = "l"
+)
+points(
+  aRSS,
+  regSummary$rss[aRSS],
+  col = "red",
+  cex = 2,
+  pch = 20
+)
+text(aRSS,
+     regSummary$rss[aRSS],
+     labels = aRSS,
+     pos = 3)
+
+par(mfrow = c(2, 2))
+plot(regFitSelect, scale = "r2")
+plot(regFitSelect, scale = "adjr2")
+plot(regFitSelect, scale = "Cp")
+plot(regFitSelect, scale = "bic")
+
+valuesBackward <- c(names(coef(regFitSelect, id = 6))[-1])
+# Exhaustive
+regFitSelect <- regsubsets(
+  postotalSSRetired~.,
+  data=dfDiff,
+  method= 'exhaustive',
+  nvmax=17)
+regSummary <- summary(regFitSelect)
+names(regSummary)
+regSummary$rsq
+regSummary$adjr2
+
+par(mfrow=c(2,2))
+aRSQ <- which.max(regSummary$rsq)
+aARSQ <- which.max(regSummary$adjr2)
+aCP <- which.min(regSummary$cp)
+aBIC <- which.min(regSummary$bic)
+aRSS <- which.min(regSummary$rss)
+
+par(mfrow = c(2, 2))
+
+plot(
+  regSummary$rsq,
+  xlab = "Number of regressors - Exhaustive - Differences",
+  ylab = "R-square",
+  type = "l"
+)
+points(
+  aRSQ,
+  regSummary$rsq[aRSQ],
+  col = "red",
+  cex = 2,
+  pch = 20
+)
+text(aRSQ,
+     regSummary$rsq[aRSQ],
+     labels = aRSQ,
+     pos = 1)
+
+plot(
+  regSummary$adjr2,
+  xlab = "Number of regressors - Exhaustive - Differences",
+  ylab = "Adjusted R-square",
+  type = "l"
+)
+points(
+  aARSQ,
+  regSummary$adjr2[aARSQ],
+  col = "red",
+  cex = 2,
+  pch = 20
+)
+text(aARSQ,
+     regSummary$adjr2[aARSQ],
+     labels = aARSQ,
+     pos = 1)
+
+plot(regSummary$cp,
+     xlab = "Number of regressors - Exhaustive - Differences",
+     ylab = "Cp",
+     type = "l")
+points(
+  aCP,
+  regSummary$cp[aCP],
+  col = "red",
+  cex = 2,
+  pch = 20
+)
+text(aCP,
+     regSummary$cp[aCP],
+     labels = aCP,
+     pos = 3)
+
+plot(
+  regSummary$bic,
+  xlab = "Number of regressors - Exhaustive - Differences",
+  ylab = "BIC",
+  type = "l"
+)
+points(
+  aBIC,
+  regSummary$bic[aBIC],
+  col = "red",
+  cex = 2,
+  pch = 20
+)
+text(aBIC,
+     regSummary$bic[aBIC],
+     labels = aBIC,
+     pos = 3)
+
+par(mfrow = c(1, 1))
+plot(
+  regSummary$rss,
+  xlab = "Number of regressors - Exhaustive - Differences",
+  ylab = "RSS",
+  type = "l"
+)
+points(
+  aRSS,
+  regSummary$rss[aRSS],
+  col = "red",
+  cex = 2,
+  pch = 20
+)
+text(aRSS,
+     regSummary$rss[aRSS],
+     labels = aRSS,
+     pos = 3)
+
+par(mfrow = c(2, 2))
+plot(regFitSelect, scale = "r2")
+plot(regFitSelect, scale = "adjr2")
+plot(regFitSelect, scale = "Cp")
+plot(regFitSelect, scale = "bic")
+
+valuesExhaustive <- c(names(coef(regFitSelect, id = 4))[-1])
+
+# Percentages - Fairly low value, not going to use ####
 regFitSelect <- regsubsets(
   postotalSSRetired~.,
   data=dfPerc,
@@ -717,6 +1072,365 @@ plot(regFitSelect, scale = "Cp")
 plot(regFitSelect, scale = "bic")
 
 
+# All Data Selection ####
+# Exhaustive - All Data
+regFitSelect <- regsubsets(
+  postotalSSRetired~.,
+  data=dfStationary[-1],
+  method= 'exhaustive',
+  really.big = TRUE,
+  nvmax=56)
+regSummary <- summary(regFitSelect)
+names(regSummary)
+regSummary$rsq
+regSummary$adjr2
+
+par(mfrow=c(2,2))
+aRSQ <- which.max(regSummary$rsq)
+aARSQ <- which.max(regSummary$adjr2)
+aCP <- which.min(regSummary$cp)
+aBIC <- which.min(regSummary$bic)
+aRSS <- which.min(regSummary$rss)
+
+par(mfrow = c(2, 2))
+
+plot(
+  regSummary$rsq,
+  xlab = "Number of regressors - Exhaustive - All",
+  ylab = "R-square",
+  type = "l"
+)
+points(
+  aRSQ,
+  regSummary$rsq[aRSQ],
+  col = "red",
+  cex = 2,
+  pch = 20
+)
+text(aRSQ,
+     regSummary$rsq[aRSQ],
+     labels = aRSQ,
+     pos = 1)
+
+plot(
+  regSummary$adjr2,
+  xlab = "Number of regressors - Exhaustive - All",
+  ylab = "Adjusted R-square",
+  type = "l"
+)
+points(
+  aARSQ,
+  regSummary$adjr2[aARSQ],
+  col = "red",
+  cex = 2,
+  pch = 20
+)
+text(aARSQ,
+     regSummary$adjr2[aARSQ],
+     labels = aARSQ,
+     pos = 1)
+
+plot(regSummary$cp,
+     xlab = "Number of regressors - Exhaustive - All",
+     ylab = "Cp",
+     type = "l")
+points(
+  aCP,
+  regSummary$cp[aCP],
+  col = "red",
+  cex = 2,
+  pch = 20
+)
+text(aCP,
+     regSummary$cp[aCP],
+     labels = aCP,
+     pos = 3)
+
+plot(
+  regSummary$bic,
+  xlab = "Number of regressors - Exhaustive - All",
+  ylab = "BIC",
+  type = "l"
+)
+points(
+  aBIC,
+  regSummary$bic[aBIC],
+  col = "red",
+  cex = 2,
+  pch = 20
+)
+text(aBIC,
+     regSummary$bic[aBIC],
+     labels = aBIC,
+     pos = 3)
+
+par(mfrow = c(1, 1))
+plot(
+  regSummary$rss,
+  xlab = "Number of regressors - Exhaustive - All",
+  ylab = "RSS",
+  type = "l"
+)
+points(
+  aRSS,
+  regSummary$rss[aRSS],
+  col = "red",
+  cex = 2,
+  pch = 20
+)
+text(aRSS,
+     regSummary$rss[aRSS],
+     labels = aRSS,
+     pos = 3)
+
+par(mfrow = c(2, 2))
+plot(regFitSelect, scale = "r2")
+plot(regFitSelect, scale = "adjr2")
+plot(regFitSelect, scale = "Cp")
+plot(regFitSelect, scale = "bic")
+
+valuesStatExhaustive <- c(names(coef(regFitSelect, id = 31))[-1])
+
+# Backward
+regFitSelect <- regsubsets(
+  postotalSSRetired~.,
+  data=dfStationary[-1],
+  method= 'backward',
+  really.big = TRUE,
+  nvmax=55)
+regSummary <- summary(regFitSelect)
+names(regSummary)
+regSummary$rsq
+regSummary$adjr2
+
+par(mfrow=c(2,2))
+aRSQ <- which.max(regSummary$rsq)
+aARSQ <- which.max(regSummary$adjr2)
+aCP <- which.min(regSummary$cp)
+aBIC <- which.min(regSummary$bic)
+aRSS <- which.min(regSummary$rss)
+
+par(mfrow = c(2, 2))
+
+plot(
+  regSummary$rsq,
+  xlab = "Number of regressors - Backward - All",
+  ylab = "R-square",
+  type = "l"
+)
+points(
+  aRSQ,
+  regSummary$rsq[aRSQ],
+  col = "red",
+  cex = 2,
+  pch = 20
+)
+text(aRSQ,
+     regSummary$rsq[aRSQ],
+     labels = aRSQ,
+     pos = 1)
+
+plot(
+  regSummary$adjr2,
+  xlab = "Number of regressors - Backward - All",
+  ylab = "Adjusted R-square",
+  type = "l"
+)
+points(
+  aARSQ,
+  regSummary$adjr2[aARSQ],
+  col = "red",
+  cex = 2,
+  pch = 20
+)
+text(aARSQ,
+     regSummary$adjr2[aARSQ],
+     labels = aARSQ,
+     pos = 1)
+
+plot(regSummary$cp,
+     xlab = "Number of regressors - Backward - All",
+     ylab = "Cp",
+     type = "l")
+points(
+  aCP,
+  regSummary$cp[aCP],
+  col = "red",
+  cex = 2,
+  pch = 20
+)
+text(aCP,
+     regSummary$cp[aCP],
+     labels = aCP,
+     pos = 3)
+
+plot(
+  regSummary$bic,
+  xlab = "Number of regressors - Backward - All",
+  ylab = "BIC",
+  type = "l"
+)
+points(
+  aBIC,
+  regSummary$bic[aBIC],
+  col = "red",
+  cex = 2,
+  pch = 20
+)
+text(aBIC,
+     regSummary$bic[aBIC],
+     labels = aBIC,
+     pos = 3)
+
+par(mfrow = c(1, 1))
+plot(
+  regSummary$rss,
+  xlab = "Number of regressors - Backward - All",
+  ylab = "RSS",
+  type = "l"
+)
+points(
+  aRSS,
+  regSummary$rss[aRSS],
+  col = "red",
+  cex = 2,
+  pch = 20
+)
+text(aRSS,
+     regSummary$rss[aRSS],
+     labels = aRSS,
+     pos = 3)
+
+par(mfrow = c(2, 2))
+plot(regFitSelect, scale = "r2")
+plot(regFitSelect, scale = "adjr2")
+plot(regFitSelect, scale = "Cp")
+plot(regFitSelect, scale = "bic")
+
+valuesStatBackward <- c(names(coef(regFitSelect, id = 7))[-1])
+
+# Forward
+regFitSelect <- regsubsets(
+  postotalSSRetired~.,
+  data=dfStationary[-1],
+  method= 'forward',
+  really.big = TRUE,
+  nvmax=55)
+regSummary <- summary(regFitSelect)
+names(regSummary)
+regSummary$rsq
+regSummary$adjr2
+
+par(mfrow=c(2,2))
+aRSQ <- which.max(regSummary$rsq)
+aARSQ <- which.max(regSummary$adjr2)
+aCP <- which.min(regSummary$cp)
+aBIC <- which.min(regSummary$bic)
+aRSS <- which.min(regSummary$rss)
+
+par(mfrow = c(2, 2))
+
+plot(
+  regSummary$rsq,
+  xlab = "Number of regressors - Forward - All",
+  ylab = "R-square",
+  type = "l"
+)
+points(
+  aRSQ,
+  regSummary$rsq[aRSQ],
+  col = "red",
+  cex = 2,
+  pch = 20
+)
+text(aRSQ,
+     regSummary$rsq[aRSQ],
+     labels = aRSQ,
+     pos = 1)
+
+plot(
+  regSummary$adjr2,
+  xlab = "Number of regressors - Forward - All",
+  ylab = "Adjusted R-square",
+  type = "l"
+)
+points(
+  aARSQ,
+  regSummary$adjr2[aARSQ],
+  col = "red",
+  cex = 2,
+  pch = 20
+)
+text(aARSQ,
+     regSummary$adjr2[aARSQ],
+     labels = aARSQ,
+     pos = 1)
+
+plot(regSummary$cp,
+     xlab = "Number of regressors - Forward - All",
+     ylab = "Cp",
+     type = "l")
+points(
+  aCP,
+  regSummary$cp[aCP],
+  col = "red",
+  cex = 2,
+  pch = 20
+)
+text(aCP,
+     regSummary$cp[aCP],
+     labels = aCP,
+     pos = 3)
+
+plot(
+  regSummary$bic,
+  xlab = "Number of regressors - Forward - All",
+  ylab = "BIC",
+  type = "l"
+)
+points(
+  aBIC,
+  regSummary$bic[aBIC],
+  col = "red",
+  cex = 2,
+  pch = 20
+)
+text(aBIC,
+     regSummary$bic[aBIC],
+     labels = aBIC,
+     pos = 3)
+
+par(mfrow = c(1, 1))
+plot(
+  regSummary$rss,
+  xlab = "Number of regressors - Forward - All",
+  ylab = "RSS",
+  type = "l"
+)
+points(
+  aRSS,
+  regSummary$rss[aRSS],
+  col = "red",
+  cex = 2,
+  pch = 20
+)
+text(aRSS,
+     regSummary$rss[aRSS],
+     labels = aRSS,
+     pos = 3)
+
+par(mfrow = c(2, 2))
+plot(regFitSelect, scale = "r2")
+plot(regFitSelect, scale = "adjr2")
+plot(regFitSelect, scale = "Cp")
+plot(regFitSelect, scale = "bic")
+
+valuesStatForward <- c(names(coef(regFitSelect, id = 10))[-1])
+
+fmlaForward <- as.formula(paste("postotalSSRetired ~ ", paste(valuesStatForward, collapse= "+")))
+fmlaBackward <- as.formula(paste("postotalSSRetired ~ ", paste(valuesStatBackward, collapse= "+")))
+fmlaExhaust <- as.formula(paste("postotalSSRetired ~ ", paste(valuesStatExhaustive, collapse= "+")))
+
 # Model ####
 # Setting train/test split
 set.seed(1)
@@ -730,31 +1444,326 @@ testX <- testData[,c(1, 3:58)]
 trainY <- testData[,c(1:2)]
 
 # Logistic ####
-glmFit <- glm(postotalSSRetired ~ diffRealDJIopen + diffRealDJIhigh + diffRealSPopen + diffRealSPhigh + diffRealaverageFemaleSSRetiredPay + diffRealDJIclose, family = binomial, data = dfStationary)
-summary(glmFit, diagnostics=TRUE)
 
-glmProbs <- predict(glmFit, type = 'response')
-glmProbs[1:10]
+# Exhaustive Selected model
+logFit <- glm(fmlaExhaust,
+              family = binomial,
+              data = dfStationary)
+summary(logFit, diagnostics=TRUE)
+confint(logFit)
 
-glmPred <- rep(0, dim(dfStationary)[2])
-glmPred[glmProbs > 0.5] <- 1
-table(glmPred)
-table(glmPred, dfStationary[,2])
+logProbs <- predict(logFit, type = 'response')
+logProbs[1:10]
 
-mean(glmPred == dfStationary[,2])
+logPred <- rep(NA, dim(dfStationary)[2])
+logPred[logProbs > 0.5] <- 1
+logPred[logProbs < 0.5] = 0
+
+table(logPred)
+table(logPred, dfStationary[,2])
+
+mean(logPred == dfStationary[,2])
 # Testing Prediction
 train <- subset(dfStationary, dfStationary$date < as.Date('2010-04-08'))
 test3rdQuart <- subset(dfStationary, dfStationary$date >= as.Date('2010-04-08'))
 
-glmFit <- glm(postotalSSRetired ~ diffRealDJIopen + diffRealDJIhigh + diffRealSPopen + diffRealSPhigh + diffRealaverageFemaleSSRetiredPay + diffRealDJIclose, family = binomial, data = train)
-glmProbs <- predict(glmFit, test3rdQuart, type = 'response') # setting prediction for the testing set FROM the training set
+logFit1 <- glm(fmlaExhaust,
+               family = binomial,
+               data = train)
+logProbs1 <- predict(logFit1, test3rdQuart, type = 'response') # setting prediction for the testing set FROM the training set
 
-glmPred <- rep(0, 101)
-glmPred[glmProbs > 0.5] = 1
+logPred1 <- rep(NA, dim(train)[2])
+logPred1[logProbs1 >= 0.5] = 1
+logPred1[logProbs1 < 0.5] = 0
 
-table(glmPred, test3rdQuart$postotalSSRetired)
-mean(glmPred == test3rdQuart$postotalSSRetired)
-#' Predicition accuracy is approximately 74% with a train/test split at the 3rd quartile mark of the dates. Seems good
+table(logPred1, test3rdQuart$postotalSSRetired)
+mean(logPred1 == test3rdQuart$postotalSSRetired)
+#' Predicition accuracy is approximately 94% with a train/test split at the 3rd quartile mark of the dates.
+#' Positive class prediction: 37/5; 88%
+#' Negative Class prediction: 58/1; 98.3%
+#' 
 
-# Basic ARIMA
+# Backard Selected model
+logFit <- glm(fmlaBackward,
+              family = binomial,
+              data = dfStationary)
+summary(logFit, diagnostics=TRUE)
+confint(logFit)
 
+logProbs <- predict(logFit, type = 'response')
+logProbs[1:10]
+
+logPred <- rep(0, dim(dfStationary)[2])
+logPred[logProbs >= 0.5] <- 1
+logPred[logProbs < 0.5] <- 0
+
+table(logPred)
+table(logPred, dfStationary[,2])
+
+mean(logPred == dfStationary[,2])
+# Testing Prediction
+train <- subset(dfStationary, dfStationary$date < as.Date('2010-04-08'))
+test3rdQuart <- subset(dfStationary, dfStationary$date >= as.Date('2010-04-08'))
+
+logFit1 <- glm(fmlaBackward,
+               family = binomial,
+               data = train)
+logProbs1 <- predict(logFit1, test3rdQuart, type = 'response') # setting prediction for the testing set FROM the training set
+
+logPred1 <- rep(NA, dim(train)[2])
+logPred1[logProbs1 >= 0.5] = 1
+logPred1[logProbs1 < 0.5] = 0
+
+table(logPred1, test3rdQuart$postotalSSRetired)
+mean(logPred1 == test3rdQuart$postotalSSRetired)
+#' Predicition accuracy is approximately 91% with a train/test split at the 3rd quartile mark of the dates.
+#' Positive class prediction: 39/3; 92.8%
+#' Negative Class prediction: 53/6; 89.8%
+#' 
+
+# Forward Selected model - Best Model
+logFit <- glm(fmlaForward,
+              family = binomial,
+              data = dfStationary)
+summary(logFit, diagnostics=TRUE)
+confint(logFit)
+
+logProbs <- predict(logFit, type = 'response')
+logProbs[1:10]
+
+logPred <- rep(NA, dim(dfStationary)[2])
+logPred[logProbs > 0.5] <- 1
+logPred[logProbs < 0.5] = 0
+
+
+table(logPred)
+table(logPred, dfStationary[,2])
+
+mean(logPred == dfStationary[,2])
+# Testing Prediction
+train <- subset(dfStationary, dfStationary$date < as.Date('2010-04-08'))
+test3rdQuart <- subset(dfStationary, dfStationary$date >= as.Date('2010-04-08'))
+
+logFit1 <- glm(fmlaForward,
+               family = binomial,
+               data = train)
+logProbs1 <- predict(logFit1, test3rdQuart, type = 'response') # setting prediction for the testing set FROM the training set
+
+logPred1 <- rep(NA, dim(train)[2])
+logPred1[logProbs1 >= 0.5] = 1
+logPred1[logProbs1 < 0.5] = 0
+
+table(logPred1, test3rdQuart$postotalSSRetired)
+mean(logPred1 == test3rdQuart$postotalSSRetired)
+#' Predicition accuracy is approximately 93% with a train/test split at the 3rd quartile mark of the dates.
+#' Positive class prediction: 40/2; 95%
+#' Negative Class prediction: 54/5; 91.5%
+#' This is the best model. 
+
+# Check only those with good statistical significance
+logFit <- glm(postotalSSRetired ~ posDJIclose + posDJIadjClose + posRealSPopen  + posRealSPadjClose + posRealaverageFemaleSSRetiredPay,
+              family = binomial,
+              data = dfStationary)
+summary(logFit, diagnostics=TRUE)
+confint(logFit)
+
+logProbs <- predict(logFit, type = 'response')
+logProbs[1:10]
+
+logPred <- rep(0, dim(dfStationary)[2])
+logPred[logProbs > 0.5] <- 1
+table(logPred)
+table(logPred, dfStationary[,2])
+
+mean(logPred == dfStationary[,2])
+# Testing Prediction
+train <- subset(dfStationary, dfStationary$date < as.Date('2010-04-08'))
+test3rdQuart <- subset(dfStationary, dfStationary$date >= as.Date('2010-04-08'))
+
+logFit1 <- glm(postotalSSRetired ~ posDJIclose + posDJIadjClose + posRealSPopen  + posRealSPadjClose + posRealaverageFemaleSSRetiredPay,
+               family = binomial,
+               data = train)
+logProbs1 <- predict(logFit1, test3rdQuart, type = 'response') # setting prediction for the testing set FROM the training set
+
+logPred1 <- rep(NA, dim(train)[2])
+logPred1[logProbs1 >= 0.5] = 1
+logPred1[logProbs1 < 0.5] = 0
+
+table(logPred1, test3rdQuart$postotalSSRetired)
+mean(logPred1 == test3rdQuart$postotalSSRetired)
+#' Predicition accuracy is approximately 93% with a train/test split at the 3rd quartile mark of the dates.
+#' Positive class prediction: 40/2; 95%
+#' Negative Class prediction: 54/5; 91.5%
+#' There is no change, but we have reduced the number of regressors by half, from 10 to 5.
+#' 
+
+# Subset this further by selecting only those with statistical significance from this model
+logFit <- glm(postotalSSRetired ~  posDJIadjClose + posRealSPopen  + posRealSPadjClose + posRealaverageFemaleSSRetiredPay,
+              family = binomial,
+              data = dfStationary)
+summary(logFit, diagnostics=TRUE)
+confint(logFit)
+
+logProbs <- predict(logFit, type = 'response')
+logProbs[1:10]
+
+logPred <- rep(0, dim(dfStationary)[2])
+logPred[logProbs > 0.5] <- 1
+table(logPred)
+table(logPred, dfStationary[,2])
+
+mean(logPred == dfStationary[,2])
+# Testing Prediction
+train <- subset(dfStationary, dfStationary$date < as.Date('2010-04-08'))
+test3rdQuart <- subset(dfStationary, dfStationary$date >= as.Date('2010-04-08'))
+
+logFit1 <- glm(postotalSSRetired ~ posDJIadjClose + posRealSPopen  + posRealSPadjClose + posRealaverageFemaleSSRetiredPay,
+               family = binomial,
+               data = train)
+logProbs1 <- predict(logFit1, test3rdQuart, type = 'response') # setting prediction for the testing set FROM the training set
+
+logPred1 <- rep(NA, dim(train)[2])
+logPred1[logProbs1 >= 0.5] = 1
+logPred1[logProbs1 < 0.5] = 0
+
+table(logPred1, test3rdQuart$postotalSSRetired)
+mean(logPred1 == test3rdQuart$postotalSSRetired)
+#' Predicition accuracy is approximately 93% with a train/test split at the 3rd quartile mark of the dates.
+#' Positive class prediction: 40/2; 95%
+#' Negative Class prediction: 54/5; 91.5%
+#' There is no change, but we have reduced the number of regressors from 5 to 4.
+#' 
+
+# Subset once more based on those with statistical significance better than 0.05
+logFit <- glm(postotalSSRetired ~  posDJIadjClose + posRealSPopen  + posRealSPadjClose,
+              family = binomial,
+              data = dfStationary)
+summary(logFit, diagnostics=TRUE)
+confint(logFit)
+
+logProbs <- predict(logFit, type = 'response')
+logProbs[1:10]
+
+logPred <- rep(0, dim(dfStationary)[2])
+logPred[logProbs > 0.5] <- 1
+table(logPred)
+table(logPred, dfStationary[,2])
+
+mean(logPred == dfStationary[,2])
+# Testing Prediction
+train <- subset(dfStationary, dfStationary$date < as.Date('2010-04-08'))
+test3rdQuart <- subset(dfStationary, dfStationary$date >= as.Date('2010-04-08'))
+
+logFit1 <- glm(postotalSSRetired ~ posDJIadjClose + posRealSPopen  + posRealSPadjClose,
+               family = binomial,
+               data = train)
+logProbs1 <- predict(logFit1, test3rdQuart, type = 'response') # setting prediction for the testing set FROM the training set
+
+logPred1 <- rep(NA, dim(train)[2])
+logPred1[logProbs1 >= 0.5] = 1
+logPred1[logProbs1 < 0.5] = 0
+
+table(logPred1, test3rdQuart$postotalSSRetired)
+mean(logPred1 == test3rdQuart$postotalSSRetired)
+#' Predicition accuracy is approximately 93% with a train/test split at the 3rd quartile mark of the dates.
+#' Positive class prediction: 40/2; 95%
+#' Negative Class prediction: 54/5; 91.5%
+#' There is no change, but we have reduced the number of regressors from 4 to 3.
+#' All factors are statisticall siginificant.
+#' 
+
+predForm <- as.formula(postotalSSRetired ~ posDJIadjClose + posRealSPopen  + posRealSPadjClose)
+
+#' Switch up the train/test split to account for about 80% of the data
+train80 <- subset(dfStationary, dfStationary$date < as.Date(dfStationary$date[round(nrow(dfStationary) * 0.8)]))
+test20 <- subset(dfStationary, dfStationary$date >= as.Date(dfStationary$date[round(nrow(dfStationary) * 0.8)]))
+
+logFit <- glm(predForm,
+              family = binomial,
+              data = dfStationary)
+summary(logFit, diagnostics=TRUE)
+confint(logFit)
+
+logProbs <- predict(logFit, type = 'response')
+logProbs[1:10]
+
+logPred <- rep(0, dim(dfStationary)[2])
+logPred[logProbs > 0.5] <- 1
+table(logPred)
+table(logPred, dfStationary[,2])
+
+mean(logPred == dfStationary[,2])
+# Testing Prediction
+logFit1 <- glm(predForm,
+               family = binomial,
+               data = train80)
+logProbs1 <- predict(logFit1, test20, type = 'response') # setting prediction for the testing set FROM the training set
+
+logPred1 <- rep(NA, dim(train80)[2])
+logPred1[logProbs1 >= 0.5] = 1
+logPred1[logProbs1 < 0.5] = 0
+
+table(logPred1, test20$postotalSSRetired)
+mean(logPred1 == test20$postotalSSRetired)
+
+#' Predicition accuracy is approximately 95% with a train/test split of 80/20.
+#' Positive class prediction: 43/3; 93.4%
+#' Negative Class prediction: 35/36; 97.2%.
+
+#' Let's check how probit fits the data
+
+# Probit ####
+#' As the variable of interest is generated from the differences in Total SS Recipients, which appears about normally distributed, a probit model may be more appropriate.
+probFit <- glm(predForm,
+               family = binomial(link = "probit"), 
+               data = dfStationary)
+summary(probFit, diagnostics=TRUE)
+confint(probFit)
+
+probProbs <- predict(probFit, type = 'response')
+probProbs[1:10]
+
+probPred <- rep(NA, dim(dfStationary)[2])
+probPred[probProbs >= 0.5] <- 1
+probPred[probProbs < 0.5] <- 0
+
+table(probPred)
+table(probPred, dfStationary$postotalSSRetired)
+
+mean(probPred == dfStationary$postotalSSRetired)
+
+# Testing Prediction
+probFit1 <- glm(predForm,
+                family = binomial(link = "probit"),
+                data = train)
+probProbs1 <- predict(probFit1, test3rdQuart, type = 'response') # setting prediction for the testing set FROM the training set
+
+probPred1 <- rep(0, dim(train)[2])
+probPred1[probProbs1 >= 0.5] <- 1
+probPred1[probProbs1 < 0.5] <- 0
+
+table(probPred1, test3rdQuart$postotalSSRetired)
+mean(probPred1 == test3rdQuart$postotalSSRetired)
+#' Predicition accuracy is approximately 93% with a train/test split at the 3rd quartile mark of the dates.
+#' Positive class prediction: 40/2; 95.2%
+#' Negative Class prediction: 54/5; 91.5%.
+
+# Test it at the 80/20 split
+train80 <- subset(dfStationary, dfStationary$date < as.Date(dfStationary$date[round(nrow(dfStationary) * 0.8)]))
+test20 <- subset(dfStationary, dfStationary$date >= as.Date(dfStationary$date[round(nrow(dfStationary) * 0.8)]))
+
+probFit1 <- glm(predForm,
+                family = binomial(link = "probit"),
+                data = train)
+probProbs1 <- predict(probFit1, test20, type = 'response') # setting prediction for the testing set FROM the training set
+
+probPred1 <- rep(0, dim(train80)[2])
+probPred1[probProbs1 >= 0.5] <- 1
+probPred1[probProbs1 < 0.5] <- 0
+
+table(probPred1, test20$postotalSSRetired)
+mean(probPred1 == test20$postotalSSRetired)
+#' Predicition accuracy is approximately 95% with a train/test split of 80/20.
+#' Positive class prediction: 43/3; 93.4%
+#' Negative Class prediction: 35/1; 97.2%
+#' This prediction accuracy is the same as the logit model
