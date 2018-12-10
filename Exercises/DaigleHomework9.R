@@ -1,7 +1,9 @@
-# Chapter 8 Lab: Decision Trees
-
-# Fitting Classification Trees
-
+#'
+#' Christopher Daigle
+#' 
+#' Big Data
+#' 
+#' Exercise 9 - Reproduce the code from ISLR in Chapter 8
 library(tree)
 library(ISLR)
 attach(Carseats)

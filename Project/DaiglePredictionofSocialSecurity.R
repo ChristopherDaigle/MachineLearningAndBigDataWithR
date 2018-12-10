@@ -6,13 +6,16 @@
 
 # Prepare workspace ####
 rm(list = ls())
-knitr::opts_chunk$set(message = FALSE)
 library(tseries)
 library(quantmod)
 library(data.table)
 library(leaps)
 library(plm)
 library(class)
+library(lmtest)
+library(caret)
+library(knitr)
+library(pastecs)
 setwd('~/Git/MachineLearningAndBigDataWithR/Data')
 dataName <- 'assembled.csv'
 df <- read.csv(dataName, stringsAsFactors = FALSE)
@@ -1522,7 +1525,7 @@ mean(logPred1 == test3rdQuart$postotalSSRetired)
 #' 
 
 # Forward Selected model - Best Model
-logFit <- glm(fmlaForward,
+logFitForwardAll <- glm(fmlaForward,
               family = binomial,
               data = dfStationary)
 summary(logFit, diagnostics=TRUE)
@@ -1635,7 +1638,7 @@ mean(logPred1 == test3rdQuart$postotalSSRetired)
 #' 
 
 # Subset once more based on those with statistical significance better than 0.05
-logFit <- glm(postotalSSRetired ~  posDJIadjClose + posRealSPopen  + posRealSPadjClose,
+logFitForwardMinimal <- glm(postotalSSRetired ~  posDJIadjClose + posRealSPopen  + posRealSPadjClose,
               family = binomial,
               data = dfStationary)
 summary(logFit, diagnostics=TRUE)
@@ -1693,7 +1696,7 @@ table(logPred)
 table(logPred, dfStationary[,2])
 
 mean(logPred == dfStationary[,2])
-# Testing Prediction
+# Testing Prediction ####
 logFit1 <- glm(predForm,
                family = binomial,
                data = train80)
@@ -1710,8 +1713,20 @@ mean(logPred1 == test20$postotalSSRetired)
 #' Positive class prediction: 43/3; 93.4%
 #' Negative Class prediction: 35/36; 97.2%.
 
-#' Let's check how probit fits the data
+# Test the models with all features and reduced (minimal) features
+lrtest(logFitForwardAll, logFitForwardMinimal)
+lrtest(logFitForwardMinimal, logFitForwardAll)
+#' Testing the null hypothesis that the restricted model (3 predictors) fits the data BETTER than the unrestricted model (10 predictors) results in a p-value greater than 0.05 (p-value = 0.1333), and thus we fail to reject the null hypothesis.
+#' The restricted model is at least as good as the unrestricted.
+#' 
+# Given that H0 holds that the reduced model is true, a p-value for the overall model fit statistic that is less than 0.05 would compel us to reject the null hypothesis. It would provide evidence against the reduced model in favor of the current model
+anova(logFitForwardAll, logFitForwardMinimal, test ="Chisq")
+anova(logFitForwardMinimal, logFitForwardAll, test ="Chisq")
 
+varImp(logFitForwardAll)
+varImp(logFitForwardMinimal)
+
+#' Let's check how probit fits the data
 # Probit ####
 #' As the variable of interest is generated from the differences in Total SS Recipients, which appears about normally distributed, a probit model may be more appropriate.
 probFit <- glm(predForm,
@@ -1767,3 +1782,13 @@ mean(probPred1 == test20$postotalSSRetired)
 #' Positive class prediction: 43/3; 93.4%
 #' Negative Class prediction: 35/1; 97.2%
 #' This prediction accuracy is the same as the logit model
+
+
+# Descriptive Statistics ####
+stat.desc(dfStationary[, valuesStatForward])
+kable(stat.desc(dfStationary[, valuesStatForward[c(1, 2, 3, 5)]], norm=TRUE, p=0.95), digits=3, align='c',caption=
+        "Summary Statistics of Relevant Variables 1")
+kable(stat.desc(dfStationary[, valuesStatForward[c(4,7,8)]], norm=TRUE, p=0.95), digits=3, align='c',caption=
+        "Summary Statistics of Relevant Variables 2")
+kable(stat.desc(dfStationary[, valuesStatForward[c(6, 9, 10)]], norm=TRUE, p=0.95), digits=3, align='c',caption=
+        "Summary Statistics of Relevant Variables 3")
